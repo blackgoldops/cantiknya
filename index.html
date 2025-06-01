@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Untukmuuuuuu</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Georgia', serif;
+            background: linear-gradient(45deg, #ff9a9e, #fecfef, #fecfef, #ff9a9e);
+            background-size: 400% 400%;
+            animation: gradientShift 8s ease infinite;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            position: relative;
+        }
+
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* flowers */
+        .flower {
+            position: absolute;
+            font-size: 2rem;
+            animation: float 6s ease-in-out infinite;
+            opacity: 0.7;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-20px) rotate(180deg); }
+        }
+
+        .flower:nth-child(1) { top: 10%; left: 10%; animation-delay: 0s; }
+        .flower:nth-child(2) { top: 20%; right: 15%; animation-delay: 1s; }
+        .flower:nth-child(3) { bottom: 20%; left: 20%; animation-delay: 2s; }
+        .flower:nth-child(4) { bottom: 10%; right: 10%; animation-delay: 3s; }
+        .flower:nth-child(5) { top: 50%; left: 5%; animation-delay: 4s; }
+        .flower:nth-child(6) { top: 60%; right: 8%; animation-delay: 5s; }
+
+        /* Blur overlay */
+        .blur-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            backdrop-filter: blur(10px);
+            background: rgba(255, 182, 193, 0.3);
+            z-index: 1000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: all 1s ease;
+        }
+
+        .blur-overlay.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .letter-container {
+            perspective: 1000px;
+            z-index: 1001;
+        }
+
+        .letter {
+            width: 300px;
+            height: 200px;
+            background: linear-gradient(145deg, #fff, #f8f8f8);
+            border-radius: 15px;
+            box-shadow: 
+                0 20px 40px rgba(0, 0, 0, 0.1),
+                inset 0 1px 0 rgba(255, 255, 255, 0.8);
+            position: relative;
+            cursor: pointer;
+            transition: all 0.6s ease;
+            transform-style: preserve-3d;
+        }
+
+        .letter:hover {
+            transform: rotateY(5deg) rotateX(5deg);
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+        }
+
+        .letter::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="paper" x="0" y="0" width="20" height="20" patternUnits="userSpaceOnUse"><line x1="0" y1="20" x2="20" y2="20" stroke="%23ffc0cb" stroke-width="0.5" opacity="0.3"/></pattern></defs><rect width="100" height="100" fill="url(%23paper)"/></svg>');
+            border-radius: 15px;
+            opacity: 0.5;
+        }
+
+        .envelope-seal {
+            position: absolute;
+            top: -10px;
+            right: -10px;
+            width: 40px;
+            height: 40px;
+            background: #ff69b4;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            color: white;
+            box-shadow: 0 5px 15px rgba(255, 105, 180, 0.4);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        .letter-content {
+            padding: 30px 25px;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            position: relative;
+            z-index: 2;
+        }
+
+        .letter-title {
+            font-size: 1.5rem;
+            color: #d63384;
+            margin-bottom: 15px;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+        }
+
+        .letter-preview {
+            font-size: 0.9rem;
+            color: #666;
+            line-height: 1.4;
+            font-style: italic;
+        }
+
+        /* Main content card */
+        .main-card {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            width: 90%;
+            max-width: 400px;
+            background: linear-gradient(145deg, #fff, #fafafa);
+            border-radius: 20px;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+            z-index: 1002;
+            opacity: 0;
+            transition: all 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .main-card.show {
+            transform: translate(-50%, -50%) scale(1);
+            opacity: 1;
+        }
+
+        .card-header {
+            background: linear-gradient(135deg, #ff9a9e, #fecfef);
+            padding: 25px;
+            border-radius: 20px 20px 0 0;
+            text-align: center;
+            position: relative;
+        }
+
+        .card-header::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 15px solid transparent;
+            border-right: 15px solid transparent;
+            border-top: 10px solid #fecfef;
+        }
+
+        .card-title {
+            font-size: 1.8rem;
+            color: #fff;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+            margin-bottom: 10px;
+        }
+
+        .card-subtitle {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 0.9rem;
+        }
+
+        .card-body {
+            padding: 30px 25px;
+        }
+
+        .romantic-quotes {
+            margin-bottom: 30px;
+        }
+
+        .quote-item {
+            background: linear-gradient(135deg, #fff, #fef7f7);
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 15px;
+            border-left: 4px solid #ff69b4;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+        }
+
+        .quote-text {
+            font-size: 1rem;
+            color: #d63384;
+            font-style: italic;
+            margin-bottom: 8px;
+            line-height: 1.5;
+        }
+
+        .quote-translation {
+            font-size: 0.85rem;
+            color: #666;
+            line-height: 1.4;
+        }
+
+        .lyrics-section {
+            border-top: 2px solid #fecfef;
+            padding-top: 25px;
+        }
+
+        .lyrics-title {
+            text-align: center;
+            font-size: 1.3rem;
+            color: #d63384;
+            margin-bottom: 20px;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+        }
+
+        .lyrics-container {
+            min-height: 200px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+
+        .lyric-line {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 1s ease;
+            margin-bottom: 15px;
+        }
+
+        .lyric-line.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .lyric-text {
+            font-size: 1.1rem;
+            color: #d63384;
+            font-weight: 500;
+            margin-bottom: 5px;
+        }
+
+        .lyric-translation {
+            font-size: 0.9rem;
+            color: #666;
+            font-style: italic;
+        }
+
+        .replay-section {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 20px;
+        }
+
+        .replay-btn {
+            background: linear-gradient(135deg, #ff9a9e, #fecfef);
+            border: none;
+            padding: 15px 30px;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(255, 154, 158, 0.3);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 0 auto;
+            color: white;
+            font-weight: 500;
+            font-size: 1rem;
+        }
+
+        .replay-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(255, 154, 158, 0.4);
+            background: linear-gradient(135deg, #ff8a95, #fdbde8);
+        }
+
+        .replay-btn:active {
+            transform: translateY(0);
+        }
+
+        .replay-icon {
+            font-size: 1.2rem;
+            animation: rotate 2s linear infinite paused;
+        }
+
+        .replay-btn:hover .replay-icon {
+            animation-play-state: running;
+        }
+
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.9);
+            border: none;
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            color: #d63384;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .close-btn:hover {
+            background: #fff;
+            transform: scale(1.1);
+        }
+
+        /* Mobile responsive */
+        @media (max-width: 480px) {
+            .letter {
+                width: 280px;
+                height: 180px;
+            }
+
+            .main-card {
+                width: 95%;
+                max-height: 85vh;
+            }
+
+            .card-header {
+                padding: 20px;
+            }
+
+            .card-title {
+                font-size: 1.5rem;
+            }
+
+            .card-body {
+                padding: 20px;
+            }
+
+            .quote-item {
+                padding: 15px;
+            }
+
+            .flower {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Floating flowers -->
+    <div class="flower">🌸</div>
+    <div class="flower">🌺</div>
+    <div class="flower">🌷</div>
+    <div class="flower">🌹</div>
+    <div class="flower">💐</div>
+    <div class="flower">🌼</div>
+
+    <!-- Blur overlay with letter -->
+    <div class="blur-overlay" id="blurOverlay">
+        <div class="letter-container">
+            <div class="letter" id="letterCard">
+                <div class="envelope-seal">💌</div>
+                <div class="letter-content">
+                    <div class="letter-title">Spesial buat muuuuu</div>
+                    <div class="letter-preview">
+                        Klik untuk membuka...<br>
+                        <small>✨ Ada sesuatu yang special untukmu ✨</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main content card -->
+    <div class="main-card" id="mainCard">
+        <div class="card-header">
+            <button class="close-btn" id="closeBtn">×</button>
+            <div class="card-title">💕 cantiknyaaaaa 💕</div>
+            <div class="card-subtitle">Sesuatu yang special untukmu :)</div>
+        </div>
+        <div class="card-body">
+            <div class="romantic-quotes">
+                <div class="quote-item">
+                    <div class="quote-text">"Diportibi On Adong Do Tolu Nasoboi Hubilangi, Ima godang Ni bintang Na di langit, Godang Nipasir Na Di Laut, Dohot Holungku Tuho."</div>
+                    <div class="quote-translation">"Di dunia ini, cuma ada 3 hal yang tidak bisa kuhitung: jumlah bintang di langit, pasir di laut, dan cintaku ke kamu."</div>
+                </div>
+                <div class="quote-item">
+                    <div class="quote-text">"Hamoraon, hagabeon, hasangapon 🔥🔥"</div>
+                    <div class="quote-translation">"Kekayaan, keturunan, kehormatan"</div>
+                </div>
+            </div>
+
+            <div class="lyrics-section">
+                <div class="lyrics-title">🎵 Alex Hutajulu - Ingkon Ho 🎵</div>
+                <div class="lyrics-container" id="lyricsContainer">
+                    <!-- Lyrics will be displayed here -->
+                </div>
+                
+                <!-- Replay button (hidden initially) -->
+                <div class="replay-section" id="replaySection" style="display: none;">
+                    <button class="replay-btn" id="replayBtn">
+                        <span class="replay-icon">🔄</span>
+                        <span class="replay-text">Putar Ulang</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Audio element -->
+    <audio id="backgroundMusic" preload="auto">
+        <source src="./sound.mp3" type="audio/mpeg">
+        <!-- Here the backsound path :) -->
+    </audio>
+
+    <script>
+        // Lyrics dengan timing (dalam detik)
+        const lyrics = [
+            { time: 0, text: "Manang tu dia pe au lao hasian", translation: "Kemana pun aku pergi, kekasih" },
+            { time: 6, text: "Holan rupam do di bagas rohanghon", translation: "Hanya wajahmu ada di hatiku" },
+            { time: 12, text: "Sai naeng hutiop tanganmi hasian", translation: "Selalu ingin kugenggam tanganmu" },
+            { time: 18, text: "Sai naeng huhaol dagingmi gomos", translation: "Selalu ingin kudekap erat tubuhmu" },
+            { time: 25, text: "........", translation: "......." }
+        ];
+
+        let currentLyricIndex = 0;
+        let musicStartTime = 0;
+        let animationInterval;
+
+        // DOM elements
+        const blurOverlay = document.getElementById('blurOverlay');
+        const letterCard = document.getElementById('letterCard');
+        const mainCard = document.getElementById('mainCard');
+        const closeBtn = document.getElementById('closeBtn');
+        const backgroundMusic = document.getElementById('backgroundMusic');
+        const lyricsContainer = document.getElementById('lyricsContainer');
+        const replaySection = document.getElementById('replaySection');
+        const replayBtn = document.getElementById('replayBtn');
+
+        // Open letter function
+        function openLetter() {
+            blurOverlay.classList.add('hidden');
+            setTimeout(() => {
+                mainCard.classList.add('show');
+                // Start music and lyrics
+                startMusicAndLyrics();
+            }, 500);
+        }
+
+        // Close letter function
+        function closeLetter() {
+            mainCard.classList.remove('show');
+            backgroundMusic.pause();
+            backgroundMusic.currentTime = 0;
+            clearInterval(animationInterval);
+            currentLyricIndex = 0;
+            lyricsContainer.innerHTML = '';
+            replaySection.style.display = 'none';
+            
+            setTimeout(() => {
+                blurOverlay.classList.remove('hidden');
+            }, 500);
+        }
+
+        function startMusicAndLyrics() {
+            // Hide replay button when starting
+            replaySection.style.display = 'none';
+            
+            // backgroundMusic.play();
+            
+            musicStartTime = Date.now();
+            displayLyrics();
+        }
+
+        // Display lyrics with timing
+        function displayLyrics() {
+            // Clear previous content
+            lyricsContainer.innerHTML = '';
+            
+            // Start lyrics animation
+            animationInterval = setInterval(() => {
+                const currentTime = (Date.now() - musicStartTime) / 1000; // Convert to seconds
+                
+                if (currentLyricIndex < lyrics.length) {
+                    const currentLyric = lyrics[currentLyricIndex];
+                    
+                    if (currentTime >= currentLyric.time) {
+                        showLyric(currentLyric);
+                        currentLyricIndex++;
+                    }
+                } else {
+                    // All lyrics shown, show replay button
+                    clearInterval(animationInterval);
+                    setTimeout(() => {
+                        showReplayButton();
+                    }, 2000);
+                }
+            }, 100);
+        }
+
+        // Show individual lyric with fade in/out effect
+        function showLyric(lyric) {
+            // Clear previous lyric
+            lyricsContainer.innerHTML = '';
+            
+            // Create lyric element
+            const lyricElement = document.createElement('div');
+            lyricElement.className = 'lyric-line';
+            lyricElement.innerHTML = `
+                <div class="lyric-text">${lyric.text}</div>
+                <div class="lyric-translation">${lyric.translation}</div>
+            `;
+            
+            lyricsContainer.appendChild(lyricElement);
+            
+            // Fade in
+            setTimeout(() => {
+                lyricElement.classList.add('show');
+            }, 100);
+            
+            // Fade out after 3.5 seconds
+            setTimeout(() => {
+                lyricElement.classList.remove('show');
+            }, 3500);
+        }
+
+        // Show replay button after lyrics finish
+        function showReplayButton() {
+            // Clear lyrics container
+            lyricsContainer.innerHTML = '';
+            
+            // Create end message
+            const endMessage = document.createElement('div');
+            endMessage.className = 'lyric-line show';
+            endMessage.innerHTML = `
+                <div class="lyric-text">💕 Selesai 💕</div>
+                <div class="lyric-translation">Semoga kamu suka dengan lagu ini :D</div>
+            `;
+            lyricsContainer.appendChild(endMessage);
+            
+            // Show replay button
+            setTimeout(() => {
+                replaySection.style.display = 'block';
+                replaySection.style.opacity = '0';
+                setTimeout(() => {
+                    replaySection.style.transition = 'opacity 0.5s ease';
+                    replaySection.style.opacity = '1';
+                }, 100);
+            }, 1000);
+        }
+
+        // Restart music and lyrics
+        function restartMusicAndLyrics() {
+            currentLyricIndex = 0;
+            replaySection.style.display = 'none';
+            lyricsContainer.innerHTML = '';
+            
+            // Restart music
+            backgroundMusic.currentTime = 0;
+            startMusicAndLyrics();
+        }
+
+        // Event listeners
+        letterCard.addEventListener('click', openLetter);
+        closeBtn.addEventListener('click', closeLetter);
+        replayBtn.addEventListener('click', restartMusicAndLyrics);
+
+        // Close when clicking outside the card
+        mainCard.addEventListener('click', (e) => {
+            e.stopPropagation();
+        });
+
+        document.addEventListener('click', (e) => {
+            if (mainCard.classList.contains('show') && !mainCard.contains(e.target)) {
+                closeLetter();
+            }
+        });
+
+        // Handle mobile touch events
+        letterCard.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            openLetter();
+        });
+    </script>
+</body>
+</html>
