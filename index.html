@@ -247,6 +247,83 @@
             padding-top: 25px;
         }
 
+        /* Play Button Styles */
+        .play-button-section {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .play-button {
+            background: linear-gradient(135deg, #ff69b4, #ff9a9e);
+            border: none;
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 8px 25px rgba(255, 105, 180, 0.4);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .play-button:hover {
+            transform: scale(1.1);
+            box-shadow: 0 12px 35px rgba(255, 105, 180, 0.6);
+        }
+
+        .play-button:active {
+            transform: scale(0.95);
+        }
+
+        .play-button.playing {
+            animation: playingPulse 2s ease-in-out infinite;
+        }
+
+        .play-button.disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: scale(0.9);
+        }
+
+        @keyframes playingPulse {
+            0%, 100% { 
+                transform: scale(1);
+                box-shadow: 0 8px 25px rgba(255, 105, 180, 0.4);
+            }
+            50% { 
+                transform: scale(1.05);
+                box-shadow: 0 12px 35px rgba(255, 105, 180, 0.7);
+            }
+        }
+
+        .play-icon {
+            font-size: 2rem;
+            color: white;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s ease;
+        }
+
+        .play-button::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            transition: all 0.4s ease;
+        }
+
+        .play-button:hover::before {
+            width: 100%;
+            height: 100%;
+        }
+
         .lyrics-title {
             text-align: center;
             font-size: 1.3rem;
@@ -360,6 +437,18 @@
             transform: scale(1.1);
         }
 
+        /* Welcome message */
+        .welcome-message {
+            text-align: center;
+            color: #666;
+            font-style: italic;
+            padding: 20px;
+            background: linear-gradient(135deg, #fff, #fef7f7);
+            border-radius: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+        }
+
         /* Mobile responsive */
         @media (max-width: 480px) {
             .letter {
@@ -390,6 +479,15 @@
 
             .flower {
                 font-size: 1.5rem;
+            }
+
+            .play-button {
+                width: 60px;
+                height: 60px;
+            }
+
+            .play-icon {
+                font-size: 1.8rem;
             }
         }
     </style>
@@ -439,9 +537,18 @@
             </div>
 
             <div class="lyrics-section">
+                <!-- Play Button Section -->
+                <div class="play-button-section">
+                    <button class="play-button" id="playButton">
+                        <span class="play-icon" id="playIcon">▶️</span>
+                    </button>
+                </div>
+                
                 <div class="lyrics-title">🎵 Alex Hutajulu - Ingkon Ho 🎵</div>
                 <div class="lyrics-container" id="lyricsContainer">
-                    <!-- Lyrics will be displayed here -->
+                    <div class="welcome-message">
+                        Tekan tombol play di atas untuk mendengarkan lagu dan melihat liriknya ✨
+                    </div>
                 </div>
                 
                 <!-- Replay button (hidden initially) -->
@@ -474,6 +581,7 @@
         let currentLyricIndex = 0;
         let musicStartTime = 0;
         let animationInterval;
+        let isPlaying = false;
 
         // DOM elements
         const blurOverlay = document.getElementById('blurOverlay');
@@ -484,54 +592,103 @@
         const lyricsContainer = document.getElementById('lyricsContainer');
         const replaySection = document.getElementById('replaySection');
         const replayBtn = document.getElementById('replayBtn');
+        const playButton = document.getElementById('playButton');
+        const playIcon = document.getElementById('playIcon');
 
         // Open letter function
         function openLetter() {
             blurOverlay.classList.add('hidden');
             setTimeout(() => {
                 mainCard.classList.add('show');
-                // Start music and lyrics
-                startMusicAndLyrics();
             }, 500);
         }
 
         // Close letter function
         function closeLetter() {
             mainCard.classList.remove('show');
-            backgroundMusic.pause();
-            backgroundMusic.currentTime = 0;
-            clearInterval(animationInterval);
-            currentLyricIndex = 0;
-            lyricsContainer.innerHTML = '';
-            replaySection.style.display = 'none';
+            stopMusicAndLyrics();
             
             setTimeout(() => {
                 blurOverlay.classList.remove('hidden');
             }, 500);
         }
 
-        function startMusicAndLyrics() {
-            // Hide replay button when starting
-            replaySection.style.display = 'none';
+        // Stop music and reset everything
+        function stopMusicAndLyrics() {
+            backgroundMusic.pause();
+            backgroundMusic.currentTime = 0;
+            clearInterval(animationInterval);
+            currentLyricIndex = 0;
+            isPlaying = false;
             
+            // Reset play button
+            playButton.classList.remove('playing', 'disabled');
+            playIcon.textContent = '▶️';
+            
+            // Reset lyrics container
+            lyricsContainer.innerHTML = `
+                <div class="welcome-message">
+                    Tekan tombol play di atas untuk mendengarkan lagu dan melihat liriknya ✨
+                </div>
+            `;
+            
+            replaySection.style.display = 'none';
+        }
+
+        // Start music and lyrics
+        function startMusicAndLyrics() {
+            if (isPlaying) return;
+            
+            isPlaying = true;
+            playButton.classList.add('playing', 'disabled');
+            playIcon.textContent = '⏸️';
+            
+            // Hide replay button and welcome message
+            replaySection.style.display = 'none';
+            lyricsContainer.innerHTML = '';
+            
+            // Always start lyrics, regardless of audio
+            musicStartTime = Date.now();
+            displayLyrics();
+            
+            // Try to play audio, but don't stop lyrics if it fails
             backgroundMusic.play().then(() => {
                 console.log("Audio dimulai.");
             }).catch((e) => {
-                console.warn("Autoplay ditolak oleh browser. User harus menekan play secara manual:", e);
+                console.warn("Audio tidak dapat diputar (normal untuk beberapa browser):", e);
+                // Show message but keep lyrics running
+                setTimeout(() => {
+                    const audioMessage = document.createElement('div');
+                    audioMessage.style.cssText = `
+                        position: fixed;
+                        top: 20px;
+                        left: 50%;
+                        transform: translateX(-50%);
+                        background: rgba(255, 105, 180, 0.9);
+                        color: white;
+                        padding: 10px 20px;
+                        border-radius: 20px;
+                        font-size: 0.9rem;
+                        z-index: 10000;
+                        opacity: 0;
+                        transition: opacity 0.3s ease;
+                    `;
+                    audioMessage.textContent = 'Audio tidak tersedia, tapi lirik tetap berjalan ✨';
+                    document.body.appendChild(audioMessage);
+                    
+                    setTimeout(() => audioMessage.style.opacity = '1', 100);
+                    setTimeout(() => {
+                        audioMessage.style.opacity = '0';
+                        setTimeout(() => document.body.removeChild(audioMessage), 300);
+                    }, 3000);
+                }, 1000);
             });
-            
-            musicStartTime = Date.now();
-            displayLyrics();
         }
 
         // Display lyrics with timing
         function displayLyrics() {
-            // Clear previous content
-            lyricsContainer.innerHTML = '';
-            
-            // Start lyrics animation
             animationInterval = setInterval(() => {
-                const currentTime = (Date.now() - musicStartTime) / 1000; // Convert to seconds
+                const currentTime = (Date.now() - musicStartTime) / 1000;
                 
                 if (currentLyricIndex < lyrics.length) {
                     const currentLyric = lyrics[currentLyricIndex];
@@ -541,8 +698,12 @@
                         currentLyricIndex++;
                     }
                 } else {
-                    // All lyrics shown, show replay button
+                    // All lyrics shown
                     clearInterval(animationInterval);
+                    isPlaying = false;
+                    playButton.classList.remove('playing', 'disabled');
+                    playIcon.textContent = '▶️';
+                    
                     setTimeout(() => {
                         showReplayButton();
                     }, 2000);
@@ -552,10 +713,8 @@
 
         // Show individual lyric with fade in/out effect
         function showLyric(lyric) {
-            // Clear previous lyric
             lyricsContainer.innerHTML = '';
             
-            // Create lyric element
             const lyricElement = document.createElement('div');
             lyricElement.className = 'lyric-line';
             lyricElement.innerHTML = `
@@ -578,10 +737,8 @@
 
         // Show replay button after lyrics finish
         function showReplayButton() {
-            // Clear lyrics container
             lyricsContainer.innerHTML = '';
             
-            // Create end message
             const endMessage = document.createElement('div');
             endMessage.className = 'lyric-line show';
             endMessage.innerHTML = `
@@ -590,7 +747,6 @@
             `;
             lyricsContainer.appendChild(endMessage);
             
-            // Show replay button
             setTimeout(() => {
                 replaySection.style.display = 'block';
                 replaySection.style.opacity = '0';
@@ -604,10 +760,10 @@
         // Restart music and lyrics
         function restartMusicAndLyrics() {
             currentLyricIndex = 0;
+            isPlaying = false;
             replaySection.style.display = 'none';
-            lyricsContainer.innerHTML = '';
             
-            // Restart music
+            // Reset music
             backgroundMusic.currentTime = 0;
             startMusicAndLyrics();
         }
@@ -615,6 +771,7 @@
         // Event listeners
         letterCard.addEventListener('click', openLetter);
         closeBtn.addEventListener('click', closeLetter);
+        playButton.addEventListener('click', startMusicAndLyrics);
         replayBtn.addEventListener('click', restartMusicAndLyrics);
 
         // Close when clicking outside the card
@@ -632,6 +789,13 @@
         letterCard.addEventListener('touchstart', (e) => {
             e.preventDefault();
             openLetter();
+        });
+
+        // Handle audio ended event
+        backgroundMusic.addEventListener('ended', () => {
+            isPlaying = false;
+            playButton.classList.remove('playing', 'disabled');
+            playIcon.textContent = '▶️';
         });
     </script>
 </body>
