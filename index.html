@@ -514,7 +514,11 @@
             // Hide replay button when starting
             replaySection.style.display = 'none';
             
-            // backgroundMusic.play();
+            backgroundMusic.play().then(() => {
+                console.log("Audio dimulai.");
+            }).catch((e) => {
+                console.warn("Autoplay ditolak oleh browser. User harus menekan play secara manual:", e);
+            });
             
             musicStartTime = Date.now();
             displayLyrics();
